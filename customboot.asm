@@ -13,10 +13,18 @@
 * may not work because the address to be jumped to ($C064) may be different
 * (it should be just after the GC's ROM to shadow RAM copy loop).
 
+* Revision history:
+*
+* 20211022  JB  Reworked relocation code, no relocation if code is already in
+*               safe RAM. Fixed potential bugs in 68020 handling code.
+* 20210429  JB  First release
+
 glk_bas0 equ      $1c000            ; base of (S)GC I/O area
 glo_rdis equ      $64               ; RAM disable (offset)
 sgo_scr2 equ      $68               ; SGC second screen disable (write)
 glo_ptch equ      $200              ; patch area offset
+
+safe_ram equ      $50000            ; safe RAM location not affected by ROM swap-in
 
 *----------------------------------------------------------------
 * You may have to modify this depending on the (S)GC ROM version!
@@ -27,39 +35,44 @@ glr_entr equ      $c064
 
 *----------------------------------------------------------------
 
-         org      $80000            ; safe RAM location not affected by ROM swap-in
+;         org      $80000            ; obsolete
+         section  code              ; use relocatable code now
 
 base     trap     #0                ; supervisor mode
          move.w   #$3700,SR         ; disable interrupts
-         lea      base(pc),a0       ; current base address
-         lea      base,a1           ; temporary location in RAM
-         move.l   #custrom-base+$c000,d0 ; bytes to move
-         cmpa.l   a0,a1
-         beq.s    do_reset
-         bcs.s    cpy_down          ; ensure safe copy when overlap!
-         adda.l   d0,a0
+         lea      start,a0          ; start of boot code
+         lea      safe_ram,a1       ; temporary location in RAM
+         move.l   a0,a2             ; preset boot address
+         cmpa.l   a0,a1             ; is start above safe_ram?
+         bls.s    do_reset          ; yes, it's in safe memory
+         move.l   a1,a2             ; boot from copied code
+         move.l   #custrom-start+$c000,d0 ; bytes to move
+         adda.l   d0,a0             ; copy from end
          adda.l   d0,a1
-cpy_up   move.l   -(a0),-(a1)       ; copy up from lower location
+cpy_up   move.l   -(a0),-(a1)       ; copy to safe_ram
          subq.w   #4,d0
          bhi      cpy_up
-         bra.s    do_reset
-cpy_down move.l   (a0)+,(a1)+       ; copy down from higher location
-         subq.w   #4,d0
-         bhi      cpy_down
-         jmp      do_reset          ; now jump to relocated code
+do_reset move.w   sr,d1
+         btst     #12,d1            ; test for 68020
+         beq.s    no_cache          ; skip if lower
+         moveq    #9,d0
+         dc.l     $4e7b0002         ; clear and enable cache
+no_cache jmp      (a2)              ; now jump to start (either next
+                                    ; instruction or in safe_ram)
 
-do_reset lea      glk_bas0,a6       ; base of GC I/O
+start    lea      glk_bas0,a6       ; base of GC I/O
          sf       glo_rdis(a6)      ; ensure ROM paged in
          moveq    #0,d6
          moveq    #2,d7             ; for GC
-         move.w   sr,d1
+;         move.w   sr,d1            ; obsolete now
          bclr     #12,d1            ; test for 68020
          beq.s    do_copy           ; no 68020
-         move.w   d1,sr             ; reset SR
-         moveq    #9,d0
-         dc.l     $4e7b0002         ; clear and enable cache
+         move.w   d1,sr             ; reset MSP bit
+;         moveq    #9,d0             ; already done!
+;         dc.l     $4e7b0002         ; clear and enable cache
          sf       sgo_scr2(a6)      ; disable second screen
          movem.l  glo_ptch(a6),d0-d7 ; wait?
+         move.l   #$28480,sp        ; set SSP
          moveq    #$20,d6           ; set for 68020
          moveq    #0,d7
 do_copy  lea      custrom,a4        ; base of custom ROM

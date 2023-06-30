@@ -15,7 +15,7 @@ Now remember that the first 8 bytes in the 680x0's address space, which contain 
 
 Usage
 -----
-Images for both QL ROMs and the (Super)GoldCard ROM v2.49 can be downloaded [here](http://www.dilwyn.me.uk/qlrom/index.html). Bear in mind that the SGC ROM only supports a limited number of ROM versions, notably Sinclair's AH, JM, JS and MG (with international variants), and Minerva. The ROM image must be EXACTLY 48K since the space immediately after it is occupied by the SGC ROM's boot code at startup. If you get a message 'QL ROM version is not recognised! Please contact Miracle Systems', your particular ROM version is not supported (obviously, it will be of no use to contact Miracle Systems since they went out of business in 2004). Please note the copyright notice at the top of the download page mentioned, the original Sinclair ROMs may be used freely in Europe whilst Minerva has been released under the GPL.
+Images for both QL ROMs and the (Super)GoldCard ROM v2.49 can be downloaded [here](https://dilwyn.qlforum.co.uk/qlrom/index.html). Bear in mind that the SGC ROM only supports a limited number of ROM versions, notably Sinclair's AH, JM, JS and MG (with international variants), and Minerva. The ROM image must be EXACTLY 48K since the space immediately after it is occupied by the SGC ROM's boot code at startup. If you get a message 'QL ROM version is not recognised! Please contact Miracle Systems', your particular ROM version is not supported (obviously, it will be of no use to contact Miracle Systems since they went out of business in 2004). Please note the copyright notice at the top of the download page mentioned, the original Sinclair ROMs may be used freely in Europe whilst Minerva has been released under the GPL.
 
 As mentioned, the boot loader binary is just 128 bytes long. It expects the 48K ROM image to immediately follow its code, so you can boot your ROM with the following commands:
 
@@ -39,4 +39,4 @@ Building
 --------
 If you need to build your own version of the boot loader, use the GST or Quanta assembler with -NOLINK option. Versions 20211022 and later are position-independent and do no longer need to be linked separately.
 
-The assembler can be downloaded from [this](http://www.dilwyn.me.uk/asm/index.html) page.
+The assembler can be downloaded from [this](https://dilwyn.qlforum.co.uk/asm/index.html) page.
